@@ -69,7 +69,7 @@ function MessageTime() {
 }
 
 export default function ChatInterface() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput } =
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, error } =
     useChat({ api: "/api/chat" });
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -287,6 +287,17 @@ export default function ChatInterface() {
                   )}
                 </div>
               ))}
+
+              {error && (
+                <div className="flex justify-start gap-2.5">
+                  <div className="shrink-0 mt-1 w-8 h-8 rounded-full bg-red-900/40 border border-red-800 flex items-center justify-center">
+                    <BookOpen size={14} className="text-red-400" />
+                  </div>
+                  <div className="max-w-[80%] rounded-2xl rounded-tl-sm px-4 py-3 bg-red-950/40 border border-red-900/50 text-red-400 text-sm">
+                    {error.message || "Something went wrong. Please try again."}
+                  </div>
+                </div>
+              )}
 
               {isLoading && <TypingIndicator />}
 

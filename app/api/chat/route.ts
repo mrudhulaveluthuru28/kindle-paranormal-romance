@@ -7,6 +7,13 @@ const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
 export const maxDuration = 10;
 
 export async function POST(req: Request) {
+  if (!process.env.GROQ_API_KEY) {
+    return new Response(JSON.stringify({ error: "GROQ_API_KEY is not configured" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const { messages } = await req.json();
   const lastMessage = messages[messages.length - 1]?.content ?? "";
 
@@ -86,13 +93,21 @@ ANSWERING GUIDELINES:
 - Use exact numbers from the data — never estimate
 - If a book has no rating, say "unrated" not "N/A"`;
 
-  const result = streamText({
-    model: groq("llama-3.3-70b-versatile"),
-    system: systemPrompt,
-    messages,
-    maxTokens: 1024,
-    temperature: 0.1,
-  });
+  try {
+    const result = streamText({
+      model: groq("llama-3.3-70b-versatile"),
+      system: systemPrompt,
+      messages,
+      maxTokens: 1024,
+      temperature: 0.1,
+    });
 
-  return result.toDataStreamResponse();
+    return result.toDataStreamResponse();
+  } catch (err) {
+    console.error("Groq API error:", err);
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Failed to get response" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 }
