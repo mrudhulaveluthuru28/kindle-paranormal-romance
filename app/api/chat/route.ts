@@ -4,7 +4,7 @@ import { retrieveRelevantBooks, getDatasetStats, getCompactBooksList } from "@/l
 
 const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
 
-export const maxDuration = 30;
+export const maxDuration = 10;
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
