@@ -1,6 +1,6 @@
 import { createGroq } from "@ai-sdk/groq";
 import { streamText } from "ai";
-import { retrieveRelevantBooks, getDatasetStats, getCompactBooksList } from "@/lib/retrieval";
+import { retrieveRelevantBooks, getDatasetStats } from "@/lib/retrieval";
 
 const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -17,9 +17,8 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
   const lastMessage = messages[messages.length - 1]?.content ?? "";
 
-  const relevantBooks = retrieveRelevantBooks(lastMessage, 15);
+  const relevantBooks = retrieveRelevantBooks(lastMessage, 40);
   const stats = getDatasetStats();
-  const allBooks = getCompactBooksList();
 
   const yearBreakdown = Object.entries(stats.yearCounts)
     .sort((a, b) => b[0].localeCompare(a[0]))
@@ -60,34 +59,23 @@ PRICES (Paid books):
 - All Free books are priced at INR 0.00
 
 RATINGS:
-- Books rated ≥ 4.8: ${stats.ratingAbove48Count} → ${stats.ratingAbove48}
+- Books rated ≥ 4.8: ${stats.ratingAbove48Count}
 - Books rated ≥ 4.5: ${stats.ratingAbove45Count}
-- Books rated < 4.0: ${stats.ratingBelow40Count} → ${stats.ratingBelow40}
-- Books with no rating: ${stats.booksWithNoRating} → ${stats.unratedBooks}
+- Books rated < 4.0: ${stats.ratingBelow40Count}
+- Books with no rating: ${stats.booksWithNoRating}
 - Highest rated: "${stats.highestRated?.title}" (★${stats.highestRated?.rating}, ${stats.highestRated?.list_type} #${stats.highestRated?.rank})
 
 REVIEWS:
 - Most reviewed: "${stats.mostReviewed?.title}" (${stats.mostReviewed?.num_reviews?.toLocaleString()} reviews)
-- Least reviewed (bottom 5): ${stats.leastReviewed}
-
-TOP PUBLISHERS: ${stats.topPublishers}
-
-AUTHORS WITH MULTIPLE BOOKS:
-${stats.multiBookAuthors}
 
 ═══════════════════════════════════════
-FULL BOOK LIST (all 200 — use for counting, filtering, listing)
-═══════════════════════════════════════
-${allBooks}
-
-═══════════════════════════════════════
-DETAILED CONTEXT (top ${relevantBooks.length} most relevant books)
+RETRIEVED BOOKS (top ${relevantBooks.length} most relevant to this query)
 ═══════════════════════════════════════
 ${detailedContext}
 
 ANSWERING GUIDELINES:
-- For count/aggregate questions (how many, which year, list all, etc.) → scan the FULL BOOK LIST above
-- For specific book info, descriptions, or recommendations → use the DETAILED CONTEXT
+- For count/aggregate questions (how many, which year, etc.) → use the DATASET STATISTICS above
+- For specific book info, descriptions, or recommendations → use the RELEVANT BOOKS section
 - Always cite rank and list type: e.g. "Paid #3 — The Wolf King"
 - Include Amazon URLs when asked for links
 - Use exact numbers from the data — never estimate
